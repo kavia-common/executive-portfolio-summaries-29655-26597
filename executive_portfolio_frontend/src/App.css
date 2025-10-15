@@ -448,10 +448,140 @@
   to { transform: rotate(360deg); }
 }
 
+/* FilterBar styles (Ocean Professional) */
+.filterbar {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr auto;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.segmented {
+  display: inline-flex;
+  background: color-mix(in oklab, var(--color-primary) 6%, var(--card-bg));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 3px;
+}
+
+.segmented-item {
+  appearance: none;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius-md) - 2px);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+.segmented-item:hover {
+  background: color-mix(in oklab, var(--color-primary) 10%, var(--card-bg));
+  transform: translateY(-1px);
+}
+.segmented-item.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: color-mix(in oklab, var(--color-primary) 70%, white);
+  box-shadow: var(--shadow-sm);
+}
+.segmented-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.filterbar-center .date-range {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: color-mix(in oklab, var(--color-primary) 6%, var(--card-bg));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+
+.date-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.date-field input[type="date"] {
+  appearance: none;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+.date-field input[type="date"]:focus-visible {
+  outline: none;
+  border-color: color-mix(in oklab, var(--color-primary) 40%, var(--border-color));
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.date-sep {
+  color: var(--text-secondary);
+}
+
+.filterbar-right {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.portfolio-select {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: color-mix(in oklab, var(--color-primary) 6%, var(--card-bg));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+}
+
+.portfolio-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.portfolio-select select {
+  appearance: none;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+.portfolio-select select:focus-visible {
+  outline: none;
+  border-color: color-mix(in oklab, var(--color-primary) 40%, var(--border-color));
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.filterbar-reset {
+  border-color: color-mix(in oklab, var(--color-primary) 35%, var(--border-color));
+}
+
 /* Responsive tweaks */
 @media (max-width: 1024px) {
   .navbar .navbar-center {
     flex: 1 1 420px;
+  }
+  .filterbar {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+  .filterbar-right {
+    justify-content: space-between;
   }
 }
 
@@ -474,6 +604,11 @@
 
   .navbar .navbar-right .avatar {
     display: none;
+  }
+
+  .filterbar-center .date-range {
+    width: 100%;
+    flex-wrap: wrap;
   }
 }
 

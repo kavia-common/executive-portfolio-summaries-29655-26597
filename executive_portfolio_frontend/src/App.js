@@ -3,6 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import FilterBar from './components/FilterBar';
 
 // PUBLIC_INTERFACE
 function App() {
@@ -11,6 +12,21 @@ function App() {
   const [selectedRegions, setSelectedRegions] = useState([]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // FilterBar state
+  const [timeRange, setTimeRange] = useState('YTD');
+  const [portfolio, setPortfolio] = useState('');
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
+
+  // Example portfolios list - in future this can come from API
+  const portfolios = ['All Portfolios', 'Global Equity', 'Fixed Income', 'Real Assets', 'Alternatives'];
+
+  // PUBLIC_INTERFACE
+  const resetFilters = () => {
+    setTimeRange('YTD');
+    setPortfolio('All Portfolios');
+    setDateRange({ from: '', to: '' });
+  };
 
   // Toggle helpers
   // PUBLIC_INTERFACE
@@ -90,6 +106,19 @@ function App() {
               </button>
             </div>
           </header>
+
+          {/* FilterBar */}
+          <FilterBar
+            timeRange={timeRange}
+            onTimeRangeChange={setTimeRange}
+            portfolio={portfolio}
+            onPortfolioChange={setPortfolio}
+            dateFrom={dateRange.from}
+            dateTo={dateRange.to}
+            onDateChange={(next) => setDateRange({ from: next.from || '', to: next.to || '' })}
+            onReset={resetFilters}
+            portfolios={portfolios}
+          />
 
           <section className="card">
             <div style={{ display: 'grid', placeItems: 'center', textAlign: 'center', padding: '40px 0' }}>
