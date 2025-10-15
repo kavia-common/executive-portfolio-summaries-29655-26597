@@ -8,6 +8,7 @@ import SummaryCards from './components/SummaryCards';
 import PerformanceChart from './components/PerformanceChart';
 import AllocationChart from './components/AllocationChart';
 import HoldingsTable from './components/HoldingsTable';
+import DrilldownPanel from './components/DrilldownPanel';
 import { portfolios as mockPortfolios, getPerformance, getHoldings, getAllocation } from './data/mockPortfolio';
 
 // PUBLIC_INTERFACE
@@ -17,6 +18,9 @@ function App() {
   const [selectedRegions, setSelectedRegions] = useState([]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Drilldown state
+  const [selectedHolding, setSelectedHolding] = useState(null);
+  const [isDrillOpen, setIsDrillOpen] = useState(false);
 
   // FilterBar state
   const [timeRange, setTimeRange] = useState('YTD');
@@ -224,10 +228,8 @@ function App() {
                   <HoldingsTable
                     holdings={holdings}
                     onSelect={(h) => {
-                      // For now, simply log; could navigate/show drawer with details
-                      // eslint-disable-next-line no-console
-                      console.log('Selected holding:', h);
-                      // Optionally focus UI or open a detail panel in future
+                      setSelectedHolding(h);
+                      setIsDrillOpen(true);
                     }}
                     rowsPerPage={10}
                   />
@@ -254,6 +256,17 @@ function App() {
           </section>
         </main>
       </div>
+
+      {/* Drilldown slide-over for selected holding */}
+      <DrilldownPanel
+        isOpen={isDrillOpen}
+        holding={selectedHolding}
+        onClose={() => {
+          setIsDrillOpen(false);
+          // small delay to clear selection after animation for smoother UX
+          setTimeout(() => setSelectedHolding(null), 250);
+        }}
+      />
     </div>
   );
 }

@@ -448,6 +448,123 @@
   to { transform: rotate(360deg); }
 }
 
+/* DrilldownPanel (slide-over) */
+.ddp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.45);
+  backdrop-filter: saturate(120%) blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-base);
+  z-index: 90;
+}
+.ddp-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ddp-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(92vw, 420px);
+  height: 100%;
+  background: var(--card-bg);
+  border-left: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(100%);
+  transition: transform var(--transition-base);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+}
+.ddp-panel.open {
+  transform: translateX(0);
+}
+
+.ddp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-color);
+}
+.ddp-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ddp-title {
+  margin: 0;
+}
+.ddp-ticker {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ddp-spark {
+  margin: var(--space-4);
+  padding: var(--space-4);
+}
+.ddp-spark-svg {
+  width: 100%;
+  height: 56px;
+  display: block;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--color-primary) 4%, var(--card-bg));
+}
+.ddp-spark-line {
+  stroke: var(--color-primary);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 1px 0 color-mix(in oklab, var(--color-primary) 30%, transparent));
+}
+.ddp-spark-meta {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-3);
+}
+.ddp-badge-neg {
+  color: #7f1d1d;
+  border-color: color-mix(in oklab, var(--color-error) 50%, var(--border-color));
+  background: color-mix(in oklab, var(--color-error) 12%, var(--card-bg));
+}
+
+.ddp-metrics {
+  margin: 0 var(--space-4);
+}
+.ddp-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+@media (max-width: 420px) {
+  .ddp-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.ddp-metric-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ddp-metric-value {
+  font-size: 18px;
+  font-weight: 800;
+}
+.ddp-metric-value.pos { color: #065f46; }
+.ddp-metric-value.neg { color: #7f1d1d; }
+
+.ddp-actions {
+  margin-top: auto;
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  border-top: 1px solid var(--border-color);
+}
+
 /* PerformanceChart styles */
 .performance-card {
   position: relative;
