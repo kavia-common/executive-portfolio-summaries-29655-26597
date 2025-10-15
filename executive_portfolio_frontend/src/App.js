@@ -7,9 +7,9 @@ import FilterBar from './components/FilterBar';
 import SummaryCards from './components/SummaryCards';
 import PerformanceChart from './components/PerformanceChart';
 import AllocationChart from './components/AllocationChart';
-import HoldingsTable from './components/HoldingsTable';
+import AccountsTable from './components/AccountsTable';
 import DrilldownPanel from './components/DrilldownPanel';
-import { portfolios as mockPortfolios, getPerformance, getHoldings, getAllocation } from './data/mockPortfolio';
+import { portfolios as mockPortfolios, getPerformance, getAccounts, getAllocation } from './data/mockPortfolio';
 
 /**
  * PUBLIC_INTERFACE
@@ -22,14 +22,14 @@ import { portfolios as mockPortfolios, getPerformance, getHoldings, getAllocatio
  */
 function App() {
   // Quick filter state (maintained at App level for future data usage)
-  const [selectedSectors, setSelectedSectors] = useState([]);
+  const [selectedBusinessUnits, setSelectedBusinessUnits] = useState([]);
   const [selectedRegions, setSelectedRegions] = useState([]);
 
   // Sidebar open (mobile drawer)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Drilldown state
-  const [selectedHolding, setSelectedHolding] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
   const [isDrillOpen, setIsDrillOpen] = useState(false);
 
   // FilterBar state
@@ -56,14 +56,14 @@ function App() {
     setTimeRange('YTD');
     setPortfolio('All Portfolios');
     setDateRange({ from: '', to: '' });
-    setSelectedSectors([]);
+    setSelectedBusinessUnits([]);
     setSelectedRegions([]);
   };
 
   // Toggle helpers
   // PUBLIC_INTERFACE
-  const onToggleSector = (value) => {
-    setSelectedSectors((prev) =>
+  const onToggleBusinessUnit = (value) => {
+    setSelectedBusinessUnits((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
@@ -76,10 +76,10 @@ function App() {
   };
 
   const filtersSummary = useMemo(() => {
-    const s = selectedSectors.length ? `${selectedSectors.length} sector(s)` : 'All sectors';
+    const b = selectedBusinessUnits.length ? `${selectedBusinessUnits.length} business unit(s)` : 'All business units';
     const r = selectedRegions.length ? `${selectedRegions.length} region(s)` : 'All regions';
-    return `${s} • ${r}`;
-  }, [selectedSectors, selectedRegions]);
+    return `${b} • ${r}`;
+  }, [selectedBusinessUnits, selectedRegions]);
 
   // Derive selected portfolio object by name, default to first
   const selectedPortfolioName =
@@ -90,18 +90,18 @@ function App() {
   // Derived data for charts and table
   const performance = selectedPortfolioId ? getPerformance(selectedPortfolioId, timeRange) : [];
   const allocation = selectedPortfolioId ? getAllocation(selectedPortfolioId) : [];
-  // Holdings with optional sector/region filtering (if user selected filters)
-  const holdingsRaw = selectedPortfolioId ? getHoldings(selectedPortfolioId) : [];
-  const holdings = useMemo(() => {
-    let rows = holdingsRaw;
-    if (selectedSectors.length) {
-      rows = rows.filter(h => h.sector && selectedSectors.includes(h.sector));
+  // Accounts with optional business unit / region filtering (if user selected filters)
+  const accountsRaw = selectedPortfolioId ? getAccounts(selectedPortfolioId) : [];
+  const accounts = useMemo(() => {
+    let rows = accountsRaw;
+    if (selectedBusinessUnits.length) {
+      rows = rows.filter(a => a.businessUnit && selectedBusinessUnits.includes(a.businessUnit));
     }
     if (selectedRegions.length) {
-      rows = rows.filter(h => h.region && selectedRegions.includes(h.region));
+      rows = rows.filter(a => a.region && selectedRegions.includes(a.region));
     }
     return rows;
-  }, [holdingsRaw, selectedSectors, selectedRegions]);
+  }, [accountsRaw, selectedBusinessUnits, selectedRegions]);
 
   // KPI derivations
   const latestReturn = performance.length ? performance[performance.length - 1].value : 0;
@@ -109,12 +109,12 @@ function App() {
   const trendDir = latestReturn > prevReturn ? 'up' : latestReturn < prevReturn ? 'down' : 'flat';
   const trendValue = performance.length > 1 ? `${(latestReturn - prevReturn).toFixed(2)}%` : undefined;
 
-  const weightSum = holdingsRaw.reduce((acc, h) => acc + (h.weight || 0), 0);
+  const weightSum = accountsRaw.reduce((acc, a) => acc + (a.weight || 0), 0);
   const aumBn = (Math.max(1, Math.min(200, 20 + weightSum))) / 10; // 2.0 .. 20.0 range
   const aumDisplay = `$${aumBn.toFixed(1)}B`;
 
-  const avgRisk = holdingsRaw.length
-    ? holdingsRaw.reduce((acc, h) => acc + (h.riskScore || 5), 0) / holdingsRaw.length
+  const avgRisk = accountsRaw.length
+    ? accountsRaw.reduce((acc, a) => acc + (a.riskScore || (a.risk === 'Low' ? 2 : a.risk === 'Medium' ? 5 : 8)), 0) / accountsRaw.length
     : 5;
   const riskStr = avgRisk.toFixed(1);
 
@@ -188,8 +188,8 @@ function App() {
         <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
-          selectedSectors={selectedSectors}
-          onToggleSector={onToggleSector}
+          selectedBusinessUnits={selectedBusinessUnits}
+          onToggleBusinessUnit={onToggleBusinessUnit}
           selectedRegions={selectedRegions}
           onToggleRegion={onToggleRegion}
         />
@@ -249,12 +249,12 @@ function App() {
               />
             </div>
 
-            {/* Holdings Table */}
+            {/* Accounts Table */}
             <div style={{ marginTop: 'var(--space-6)' }}>
-              <HoldingsTable
-                holdings={holdings}
-                onSelect={(h) => {
-                  setSelectedHolding(h);
+              <AccountsTable
+                accounts={accounts}
+                onSelect={(a) => {
+                  setSelectedAccount(a);
                   setIsDrillOpen(true);
                 }}
                 rowsPerPage={10}
@@ -285,11 +285,11 @@ function App() {
       {/* Drilldown slide-over for selected holding */}
       <DrilldownPanel
         isOpen={isDrillOpen}
-        holding={selectedHolding}
+        account={selectedAccount}
         onClose={() => {
           setIsDrillOpen(false);
           // small delay to clear selection after animation for smoother UX
-          setTimeout(() => setSelectedHolding(null), 250);
+          setTimeout(() => setSelectedAccount(null), 250);
         }}
       />
     </div>

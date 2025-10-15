@@ -885,7 +885,7 @@ main .summary-cards + .card {
   margin-top: var(--space-6);
 }
 
-/* HoldingsTable styles */
+/* AccountsTable styles */
 .table-responsive {
   width: 100%;
   overflow-x: auto;

@@ -1,8 +1,14 @@
 //
+//
 // Pure JavaScript mock data module for Executive Portfolio Summary
 // Provides realistic mock data for portfolios, performance time series,
-// allocation breakdowns, and holdings with helper selector functions.
+// allocation breakdowns, and accounts (refactored from holdings) with helper selector functions.
 // No external dependencies.
+//
+// Domain refactor notes:
+// - Sector -> Business Unit (businessUnit)
+// - Holdings -> Accounts (accounts)
+// - Table metrics -> Success Rate (%) and Risk ('Low'|'Medium'|'High')
 //
 
 // Seeded pseudo-random for reproducibility
@@ -40,11 +46,7 @@ function generatePath({ steps, stepUnit = "day", drift = 0.08, vol = 0.12, start
   const mu = drift / stepsPerYear;
   const sigma = vol / Math.sqrt(stepsPerYear);
 
-  const points = [];
   let cumulative = 0; // percent return
-  let d = cloneDate(startDate);
-
-  // We generate backwards then reverse so the last point is 'today'
   const backPoints = [];
   for (let i = steps - 1; i >= 0; i--) {
     // Geometric-like step approximation for percent
@@ -129,22 +131,21 @@ export const allocationByPortfolio = {
 };
 
 /**
- * Holdings per portfolio.
- * Fields: {id, name, ticker, weight, returnPct, sector, region, riskScore}
- * 15-24 rows per portfolio, diversified sectors/regions.
+ * Accounts per portfolio (refactor of holdings).
+ * Fields: {id, name, successRate (0-100), risk ('Low'|'Medium'|'High'), businessUnit, region}
+ * We keep some legacy fields (returnPct, weight, riskScore) to support charts and shims.
  */
-const SECTORS = [
+const BUSINESS_UNITS = [
   "Technology",
   "Healthcare",
   "Finance",
   "Industrial",
-  "Consumer Discretionary",
-  "Consumer Staples",
-  "Energy",
-  "Utilities",
-  "Materials",
-  "Real Estate",
-  "Communication Services",
+  "Consumer",
+  "Operations",
+  "Sales & Marketing",
+  "R&D",
+  "Support",
+  "Corporate",
 ];
 
 const REGIONS = [
@@ -155,85 +156,101 @@ const REGIONS = [
   "Middle East & Africa",
 ];
 
-function mkHolding(id, name, ticker, weight, sector, region, returnPct, riskScore) {
-  return { id, name, ticker, weight: +weight.toFixed(2), returnPct: +returnPct.toFixed(2), sector, region, riskScore: Math.max(1, Math.min(10, Math.round(riskScore))) };
+function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+function riskFromScore(score) {
+  if (score <= 3) return "Low";
+  if (score <= 6) return "Medium";
+  return "High";
 }
 
-// Helpers to create diverse holdings
-function makeGlobalGrowthHoldings() {
-  const rows = [
-    mkHolding("gg-1", "Apex Technologies Inc.", "APXT", 4.8, "Technology", "North America", 12.5, 8),
-    mkHolding("gg-2", "BlueWave Semiconductor", "BWSC", 4.2, "Technology", "Asia Pacific", 9.1, 8),
-    mkHolding("gg-3", "NovaCloud Services", "NVCS", 3.9, "Communication Services", "North America", 11.4, 7),
-    mkHolding("gg-4", "Quantix Pharma", "QPHM", 3.5, "Healthcare", "Europe", 6.2, 6),
-    mkHolding("gg-5", "Global Bank Group", "GBG", 3.2, "Finance", "Europe", 4.0, 6),
-    mkHolding("gg-6", "Pioneer Industrials", "PIND", 3.0, "Industrial", "North America", 5.5, 5),
-    mkHolding("gg-7", "Horizon Retail", "HZRT", 2.9, "Consumer Discretionary", "North America", 7.0, 6),
-    mkHolding("gg-8", "GreenLeaf Foods", "GLFD", 2.6, "Consumer Staples", "Europe", 3.2, 4),
-    mkHolding("gg-9", "Terra Energy Corp", "TENC", 2.5, "Energy", "Middle East & Africa", 8.7, 7),
-    mkHolding("gg-10", "Pacific Utilities", "PCUT", 2.3, "Utilities", "Asia Pacific", 2.1, 3),
-    mkHolding("gg-11", "Allied Materials", "ALMT", 2.1, "Materials", "Latin America", 6.8, 6),
-    mkHolding("gg-12", "Metro Real Estate REIT", "MRET", 2.0, "Real Estate", "North America", 2.6, 4),
-    mkHolding("gg-13", "Vertex Automotive", "VTAU", 1.9, "Consumer Discretionary", "Europe", 5.0, 6),
-    mkHolding("gg-14", "Zenith Health Systems", "ZNHS", 1.8, "Healthcare", "North America", 4.4, 5),
-    mkHolding("gg-15", "Omega Software Ltd.", "OMSW", 1.7, "Technology", "Europe", 10.2, 8),
-    mkHolding("gg-16", "Aurora Networks", "AUNW", 1.6, "Communication Services", "Asia Pacific", 7.9, 7),
-    mkHolding("gg-17", "Summit Financial", "SUMF", 1.5, "Finance", "North America", 3.1, 5),
-    mkHolding("gg-18", "Atlas Mining", "ATMN", 1.4, "Materials", "Latin America", 6.5, 6),
-    mkHolding("gg-19", "Seaboard Logistics", "SBLG", 1.3, "Industrial", "Europe", 4.8, 5),
-    mkHolding("gg-20", "Orbital E-Commerce", "ORBC", 1.2, "Consumer Discretionary", "Asia Pacific", 9.3, 7),
+// Helper to create an account row; includes legacy compatible fields not used by table
+function mkAccount(id, name, businessUnit, region, base = 0) {
+  const r = rand();
+  const success = clamp(Math.round(60 + (r - 0.5) * 50 + base), 5, 98);
+  const riskScore = clamp(Math.round(5 + (r - 0.5) * 6), 1, 10);
+  const risk = riskFromScore(riskScore);
+  return {
+    id,
+    name,
+    businessUnit,
+    region,
+    successRate: success,
+    risk,
+    // legacy extras (not used by table but kept for charts/compat)
+    returnPct: +(success / 10 - 3 + (r - 0.5) * 2).toFixed(2),
+    weight: +(Math.abs(10 + (r - 0.5) * 8)).toFixed(2),
+    riskScore,
+  };
+}
+
+// Create diversified account lists per portfolio
+function makeGlobalGrowthAccounts() {
+  return [
+    mkAccount("gg-a1", "Enterprise Cloud Migration", "Technology", "North America", 18),
+    mkAccount("gg-a2", "APAC Semiconductor Expansion", "Technology", "Asia Pacific", 12),
+    mkAccount("gg-a3", "Digital Customer Platform", "Sales & Marketing", "North America", 14),
+    mkAccount("gg-a4", "EHR Integration Program", "Healthcare", "Europe", 6),
+    mkAccount("gg-a5", "Open Banking Rollout", "Finance", "Europe", 4),
+    mkAccount("gg-a6", "Smart Factory Automation", "Industrial", "North America", 8),
+    mkAccount("gg-a7", "E-commerce Revamp", "Sales & Marketing", "North America", 10),
+    mkAccount("gg-a8", "Sustainable Packaging", "Operations", "Europe", 2),
+    mkAccount("gg-a9", "Renewable Transition", "Operations", "Middle East & Africa", 12),
+    mkAccount("gg-a10", "Grid Modernization", "Industrial", "Asia Pacific", 1),
+    mkAccount("gg-a11", "Advanced Materials R&D", "R&D", "Latin America", 9),
+    mkAccount("gg-a12", "Smart Real Estate Ops", "Operations", "North America", 3),
+    mkAccount("gg-a13", "Next-Gen Mobility", "R&D", "Europe", 5),
+    mkAccount("gg-a14", "Care Delivery Modernization", "Healthcare", "North America", 4),
+    mkAccount("gg-a15", "SaaS Platform Growth", "Technology", "Europe", 16),
+    mkAccount("gg-a16", "5G Network Expansion", "Technology", "Asia Pacific", 11),
+    mkAccount("gg-a17", "Wealth Mgmt Platform", "Finance", "North America", 2),
+    mkAccount("gg-a18", "Sourcing Optimization", "Operations", "Latin America", 7),
+    mkAccount("gg-a19", "Logistics Orchestration", "Operations", "Europe", 4),
+    mkAccount("gg-a20", "Marketplace Launch", "Sales & Marketing", "Asia Pacific", 12),
   ];
-  // Normalize weights to sum to ~72% (aligning with equities weight) but we keep absolute numbers reasonable
-  // For simplicity we let sum be around 50-70%; weight field is just per-holding weight of portfolio total
-  return rows;
 }
-
-function makeIncomeBalancedHoldings() {
-  const rows = [
-    mkHolding("ib-1", "Dividend Tech Leaders ETF", "DTLF", 4.0, "Technology", "North America", 5.6, 5),
-    mkHolding("ib-2", "Global Healthcare Dividend", "GHCD", 3.6, "Healthcare", "Europe", 4.3, 4),
-    mkHolding("ib-3", "International Financials", "IFIN", 3.2, "Finance", "Europe", 3.1, 4),
-    mkHolding("ib-4", "Core US Aggregate Bond", "USAG", 6.5, "Finance", "North America", 2.2, 3),
-    mkHolding("ib-5", "Investment Grade Corp Bond", "IGCB", 5.8, "Finance", "North America", 2.8, 3),
-    mkHolding("ib-6", "Global Infrastructure", "GINF", 3.0, "Industrial", "Asia Pacific", 3.4, 4),
-    mkHolding("ib-7", "Preferred Securities Fund", "PRSF", 2.8, "Finance", "North America", 2.9, 3),
-    mkHolding("ib-8", "Stable Consumer Staples", "STCS", 2.4, "Consumer Staples", "Europe", 2.1, 3),
-    mkHolding("ib-9", "Energy Pipeline Partners", "ENPP", 2.0, "Energy", "North America", 4.6, 5),
-    mkHolding("ib-10", "Utilities Dividend Growth", "UDVG", 2.2, "Utilities", "Europe", 2.0, 2),
-    mkHolding("ib-11", "REIT Income Trust", "RITX", 2.0, "Real Estate", "North America", 1.7, 3),
-    mkHolding("ib-12", "Asia Pacific Telecom", "APTC", 1.8, "Communication Services", "Asia Pacific", 3.3, 4),
-    mkHolding("ib-13", "Latin Consumer Basket", "LACB", 1.4, "Consumer Discretionary", "Latin America", 3.8, 5),
-    mkHolding("ib-14", "Commodities Sleeve", "CMDS", 1.2, "Materials", "Middle East & Africa", 4.2, 5),
-    mkHolding("ib-15", "Short-Term Treasury", "STTR", 4.5, "Finance", "North America", 1.2, 1),
+function makeIncomeBalancedAccounts() {
+  return [
+    mkAccount("ib-a1", "Customer Data Lake", "Technology", "North America", 6),
+    mkAccount("ib-a2", "EU Health Compliance", "Healthcare", "Europe", 3),
+    mkAccount("ib-a3", "Payments Platform Upgrade", "Finance", "Europe", 2),
+    mkAccount("ib-a4", "Billing Modernization", "Finance", "North America", 1),
+    mkAccount("ib-a5", "Risk Analytics Suite", "Finance", "North America", 2),
+    mkAccount("ib-a6", "Airport Ops System", "Industrial", "Asia Pacific", 3),
+    mkAccount("ib-a7", "Preferred Customer Portal", "Finance", "North America", 2),
+    mkAccount("ib-a8", "Supplier Collaboration", "Operations", "Europe", 1),
+    mkAccount("ib-a9", "Pipeline Monitoring", "Industrial", "North America", 5),
+    mkAccount("ib-a10", "Energy Mgmt Console", "Industrial", "Europe", 1),
+    mkAccount("ib-a11", "Facilities Automation", "Operations", "North America", 1),
+    mkAccount("ib-a12", "Telecom OSS Migration", "Technology", "Asia Pacific", 3),
+    mkAccount("ib-a13", "LATAM Retail Revamp", "Sales & Marketing", "Latin America", 4),
+    mkAccount("ib-a14", "Commodity Trading Desk", "Finance", "Middle East & Africa", 5),
+    mkAccount("ib-a15", "Cash Management Tools", "Finance", "North America", 1),
   ];
-  return rows;
 }
-
-function makeConservativeIncomeHoldings() {
-  const rows = [
-    mkHolding("ci-1", "US Treasury 1-3 Yr", "UST13", 10.0, "Finance", "North America", 1.1, 1),
-    mkHolding("ci-2", "US Treasury 3-7 Yr", "UST37", 9.0, "Finance", "North America", 1.4, 1),
-    mkHolding("ci-3", "Investment Grade Corp", "IGCR", 8.0, "Finance", "North America", 1.8, 2),
-    mkHolding("ci-4", "International Sovereign", "INSG", 7.0, "Finance", "Europe", 1.5, 2),
-    mkHolding("ci-5", "Short-Term Municipal", "STMN", 6.0, "Finance", "North America", 1.2, 1),
-    mkHolding("ci-6", "Cash Reserve", "CASH", 8.0, "Finance", "North America", 0.5, 1),
-    mkHolding("ci-7", "Defensive Utilities", "DFUT", 3.0, "Utilities", "Europe", 1.6, 2),
-    mkHolding("ci-8", "Staples Dividend", "STPD", 3.0, "Consumer Staples", "North America", 1.9, 2),
-    mkHolding("ci-9", "Healthcare Defensive", "HCDF", 2.5, "Healthcare", "North America", 2.2, 3),
-    mkHolding("ci-10", "Covered Call Equity", "CVCE", 2.0, "Technology", "North America", 2.6, 3),
-    mkHolding("ci-11", "Mortgage-Backed Sec.", "MBSX", 5.5, "Finance", "North America", 1.4, 2),
-    mkHolding("ci-12", "Asset-Backed Sec.", "ABSX", 4.5, "Finance", "North America", 1.3, 2),
-    mkHolding("ci-13", "High-Quality Corp", "HQCR", 6.5, "Finance", "Europe", 1.7, 2),
-    mkHolding("ci-14", "Global Infrastructure", "GINF", 2.0, "Industrial", "Asia Pacific", 1.8, 3),
-    mkHolding("ci-15", "REIT Core", "RETC", 2.0, "Real Estate", "North America", 1.1, 2),
+function makeConservativeIncomeAccounts() {
+  return [
+    mkAccount("ci-a1", "Treasury Ops Digitization", "Finance", "North America", 1),
+    mkAccount("ci-a2", "Regulatory Reporting", "Finance", "North America", 2),
+    mkAccount("ci-a3", "Credit Risk Engine", "Finance", "North America", 3),
+    mkAccount("ci-a4", "Sovereign Analytics", "Finance", "Europe", 2),
+    mkAccount("ci-a5", "Municipal Workflow", "Finance", "North America", 1),
+    mkAccount("ci-a6", "Cash Reserve Management", "Corporate", "North America", 1),
+    mkAccount("ci-a7", "EU Utility Compliance", "Industrial", "Europe", 2),
+    mkAccount("ci-a8", "Staples Supply Suite", "Operations", "North America", 2),
+    mkAccount("ci-a9", "Care Pathways", "Healthcare", "North America", 3),
+    mkAccount("ci-a10", "Covered Call Ops", "Technology", "North America", 3),
+    mkAccount("ci-a11", "MBS Monitoring", "Finance", "North America", 2),
+    mkAccount("ci-a12", "ABS Processing", "Finance", "North America", 2),
+    mkAccount("ci-a13", "Corp Finance Hub", "Finance", "Europe", 2),
+    mkAccount("ci-a14", "Infrastructure Control", "Industrial", "Asia Pacific", 3),
+    mkAccount("ci-a15", "RE Ops Portal", "Operations", "North America", 2),
   ];
-  return rows;
 }
 
-export const holdingsByPortfolio = {
-  "global-growth": makeGlobalGrowthHoldings(),
-  "income-balanced": makeIncomeBalancedHoldings(),
-  "conservative-income": makeConservativeIncomeHoldings(),
+export const accountsByPortfolio = {
+  "global-growth": makeGlobalGrowthAccounts(),
+  "income-balanced": makeIncomeBalancedAccounts(),
+  "conservative-income": makeConservativeIncomeAccounts(),
 };
 
 /**
@@ -276,17 +293,37 @@ export function getAllocation(portfolioId) {
 
 /**
  * PUBLIC_INTERFACE
- * getHoldings
- * Returns holdings array for a portfolio. Sorted by weight descending by default.
- * Each holding has fields: {id, name, ticker, weight, returnPct, sector, region, riskScore}
+ * getAccounts
+ * Returns accounts array for a portfolio. Sorted by successRate descending by default.
+ * Each account has fields: {id, name, successRate, risk, businessUnit, region, ...legacy}
+ */
+// PUBLIC_INTERFACE
+export function getAccounts(portfolioId) {
+  /** Returns accounts for a portfolio, sorted by successRate descending. */
+  const rows = accountsByPortfolio[portfolioId] || [];
+  return [...rows].sort((a, b) => (b.successRate ?? 0) - (a.successRate ?? 0));
+}
+
+/**
+ * Backward-compat shim exports (temporary): map old "holdings" API to new accounts model
+ * These allow existing imports to function during refactor.
  */
 // PUBLIC_INTERFACE
 export function getHoldings(portfolioId) {
-  /** Returns holdings for a portfolio, sorted by weight descending. */
-  const rows = holdingsByPortfolio[portfolioId] || [];
-  return [...rows].sort((a, b) => b.weight - a.weight);
+  /** Shim: returns accounts but under legacy 'holdings' accessor. */
+  return getAccounts(portfolioId).map(a => ({
+    ...a,
+    // provide legacy field names with best-effort mapping
+    sector: a.businessUnit,
+    riskScore: a.risk === 'Low' ? 2 : a.risk === 'Medium' ? 5 : 8,
+    returnPct: a.returnPct ?? (a.successRate ? +(a.successRate / 10 - 3).toFixed(2) : 0),
+    weight: a.weight ?? undefined,
+  }));
 }
 
-// Convenience exports for filters
-export const allSectors = Array.from(new Set(Object.values(holdingsByPortfolio).flat().map(h => h.sector))).sort();
-export const allRegions = Array.from(new Set(Object.values(holdingsByPortfolio).flat().map(h => h.region))).sort();
+// New convenience exports for filters
+export const allBusinessUnits = Array.from(new Set(Object.values(accountsByPortfolio).flat().map(a => a.businessUnit))).sort();
+export const allRegions = Array.from(new Set(Object.values(accountsByPortfolio).flat().map(a => a.region))).sort();
+
+// Legacy convenience exports (shim)
+export const allSectors = allBusinessUnits;

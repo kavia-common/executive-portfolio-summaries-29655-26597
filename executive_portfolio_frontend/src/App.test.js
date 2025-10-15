@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders Executive Portfolio Summary title, Total AUM KPI, and Holdings section', () => {
+test('renders Executive Portfolio Summary title, Total AUM KPI, and Accounts section', () => {
   render(<App />);
 
   // Page title in Navbar and header
@@ -10,9 +10,9 @@ test('renders Executive Portfolio Summary title, Total AUM KPI, and Holdings sec
   // KPI label "Total AUM" should be visible in SummaryCards
   expect(screen.getByText(/Total AUM/i)).toBeInTheDocument();
 
-  // Holdings section header
+  // Accounts section header
   // Prefer heading role where available, but fallback to text if role resolution varies
-  const holdingsHeading =
-    screen.queryByRole('heading', { name: /Holdings/i }) || screen.getByText(/Holdings/i);
-  expect(holdingsHeading).toBeInTheDocument();
+  const accountsHeading =
+    screen.queryByRole('heading', { name: /Accounts/i }) || screen.getByText(/Accounts/i);
+  expect(accountsHeading).toBeInTheDocument();
 });

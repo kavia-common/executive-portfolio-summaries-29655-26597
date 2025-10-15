@@ -4,12 +4,12 @@ import '../App.css';
 /**
  * PUBLIC_INTERFACE
  * DrilldownPanel
- * Accessible slide-over panel that displays details for a selected holding.
+ * Accessible slide-over panel that displays details for a selected account.
  *
  * Props:
  * - isOpen: boolean - controls visibility (slide-in/out)
- * - holding: object | null - selected holding with fields:
- *      { id, name, ticker, weight, returnPct, sector, region, riskScore }
+ * - account: object | null - selected account with fields:
+ *      { id, name, successRate, risk, businessUnit, region, ... }
  * - onClose: () => void - invoked when user closes the panel
  *
  * Behavior:
@@ -19,7 +19,7 @@ import '../App.css';
  * - Renders a small inline SVG sparkline based on mock performance derived
  *   from holding.returnPct and riskScore for visual context
  */
-function DrilldownPanel({ isOpen = false, holding = null, onClose = () => {} }) {
+function DrilldownPanel({ isOpen = false, account = null, onClose = () => {} }) {
   const panelRef = useRef(null);
   const lastActiveRef = useRef(null);
 
@@ -76,22 +76,22 @@ function DrilldownPanel({ isOpen = false, holding = null, onClose = () => {} }) 
 
   // Generate a tiny sparkline based on holding characteristics
   const sparkData = useMemo(() => {
-    if (!holding) return [];
-    // Create 24 points with gentle trend influenced by returnPct and riskScore
+    if (!account) return [];
+    // Create 24 points with gentle trend influenced by successRate and risk
     const n = 24;
-    const target = typeof holding.returnPct === 'number' ? holding.returnPct : 0;
-    const vol = Math.max(0.6, Math.min(3, (holding.riskScore || 5) / 2));
+    const target = typeof account.successRate === 'number' ? account.successRate / 10 - 3 : 0;
+    const riskScore = account.risk === 'Low' ? 2 : account.risk === 'Medium' ? 5 : 8;
+    const vol = Math.max(0.6, Math.min(3, riskScore / 2));
     const arr = [];
-    let v = Math.max(-5, Math.min(5, target / 4)); // start near a quarter of return
+    let v = Math.max(-5, Math.min(5, target / 2)); // start near half target proxy
     for (let i = 0; i < n; i++) {
-      // drift toward target with noise
       const drift = (target - v) * 0.05;
       const noise = (Math.random() - 0.5) * vol;
       v = v + drift + noise;
       arr.push({ x: i, y: v });
     }
     return arr;
-  }, [holding]);
+  }, [account]);
 
   const sparkPath = useMemo(() => {
     if (!sparkData.length) return '';
@@ -113,8 +113,8 @@ function DrilldownPanel({ isOpen = false, holding = null, onClose = () => {} }) 
       .join(' ');
   }, [sparkData]);
 
-  const titleId = 'holding-drilldown-title';
-  const descId = 'holding-drilldown-desc';
+  const titleId = 'account-drilldown-title';
+  const descId = 'account-drilldown-desc';
 
   return (
     <>
@@ -139,13 +139,10 @@ function DrilldownPanel({ isOpen = false, holding = null, onClose = () => {} }) 
             <span className="brand-accent" aria-hidden="true" />
             <div>
               <h3 id={titleId} className="ddp-title">
-                {holding?.name || 'Holding'}
-                {holding?.ticker && (
-                  <span className="ddp-ticker"> {holding.ticker}</span>
-                )}
+                {account?.name || 'Account'}
               </h3>
               <p id={descId} className="u-text-muted ddp-subtitle">
-                Quick details and actions for this position
+                Quick details and actions for this account
               </p>
             </div>
           </div>
@@ -179,12 +176,12 @@ function DrilldownPanel({ isOpen = false, holding = null, onClose = () => {} }) 
             </defs>
             <path d={sparkPath} className="ddp-spark-line" fill="none" />
           </svg>
-          {holding && (
+          {account && (
             <div className="ddp-spark-meta">
-              <span className={`badge ${holding.returnPct >= 0 ? '' : 'ddp-badge-neg'}`}>
-                {holding.returnPct >= 0 ? '▲' : '▼'} {holding.returnPct?.toFixed(2)}%
+              <span className="badge">
+                Success Rate {account.successRate != null ? `${account.successRate.toFixed(0)}%` : '—'}
               </span>
-              <span className="u-text-muted">Return</span>
+              <span className="u-text-muted">Recent activity</span>
             </div>
           )}
         </section>
@@ -193,32 +190,26 @@ function DrilldownPanel({ isOpen = false, holding = null, onClose = () => {} }) 
         <section className="ddp-metrics card" aria-label="Key metrics">
           <div className="ddp-metrics-grid">
             <div className="ddp-metric">
-              <div className="ddp-metric-label">Weight</div>
-              <div className="ddp-metric-value">{holding?.weight != null ? `${holding.weight.toFixed(2)}%` : '—'}</div>
+              <div className="ddp-metric-label">Success Rate</div>
+              <div className="ddp-metric-value">{account?.successRate != null ? `${account.successRate.toFixed(0)}%` : '—'}</div>
             </div>
             <div className="ddp-metric">
-              <div className="ddp-metric-label">Return</div>
-              <div className={`ddp-metric-value ${holding?.returnPct >= 0 ? 'pos' : 'neg'}`}>
-                {holding?.returnPct != null ? `${holding.returnPct.toFixed(2)}%` : '—'}
-              </div>
+              <div className="ddp-metric-label">Risk</div>
+              <div className="ddp-metric-value">{account?.risk || '—'}</div>
             </div>
             <div className="ddp-metric">
-              <div className="ddp-metric-label">Sector</div>
-              <div className="ddp-metric-value">{holding?.sector || '—'}</div>
+              <div className="ddp-metric-label">Business Unit</div>
+              <div className="ddp-metric-value">{account?.businessUnit || '—'}</div>
             </div>
             <div className="ddp-metric">
               <div className="ddp-metric-label">Region</div>
-              <div className="ddp-metric-value">{holding?.region || '—'}</div>
-            </div>
-            <div className="ddp-metric">
-              <div className="ddp-metric-label">Risk (1-10)</div>
-              <div className="ddp-metric-value">{holding?.riskScore != null ? holding.riskScore : '—'}</div>
+              <div className="ddp-metric-value">{account?.region || '—'}</div>
             </div>
           </div>
         </section>
 
         {/* Actions */}
-        <section className="ddp-actions" aria-label="Holding actions">
+        <section className="ddp-actions" aria-label="Account actions">
           <button type="button" className="button button-primary">
             <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>

@@ -8,8 +8,8 @@ import '../App.css';
  * Props:
  * - isOpen: boolean to control mobile drawer state
  * - onClose: function called when closing the drawer (overlay click, Esc, close button)
- * - selectedSectors: array of selected sector values
- * - onToggleSector: function(value: string) to toggle sector selection
+ * - selectedBusinessUnits: array of selected business unit values
+ * - onToggleBusinessUnit: function(value: string) to toggle BU selection
  * - selectedRegions: array of selected region values
  * - onToggleRegion: function(value: string) to toggle region selection
  *
@@ -20,8 +20,8 @@ import '../App.css';
 function Sidebar({
   isOpen = false,
   onClose = () => {},
-  selectedSectors = [],
-  onToggleSector = () => {},
+  selectedBusinessUnits = [],
+  onToggleBusinessUnit = () => {},
   selectedRegions = [],
   onToggleRegion = () => {},
 }) {
@@ -58,10 +58,10 @@ function Sidebar({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
 
-  const sectors = ['Technology', 'Healthcare', 'Finance', 'Industrial', 'Energy'];
+  const businessUnits = ['Technology', 'Healthcare', 'Finance', 'Industrial', 'Operations', 'Sales & Marketing', 'R&D', 'Corporate'];
   const regions = ['North America', 'Europe', 'Asia Pacific', 'Latin America', 'Middle East & Africa'];
 
-  const clearSectors = () => sectors.forEach((s) => selectedSectors.includes(s) && onToggleSector(s));
+  const clearBusinessUnits = () => businessUnits.forEach((b) => selectedBusinessUnits.includes(b) && onToggleBusinessUnit(b));
   const clearRegions = () => regions.forEach((r) => selectedRegions.includes(r) && onToggleRegion(r));
 
   const NavItem = ({ icon, label, href = '#', ariaLabel }) => (
@@ -100,35 +100,35 @@ function Sidebar({
 
           <div className="side-divider" role="separator" aria-hidden="true"></div>
 
-          <section className="filter-section" aria-labelledby="sector-filter-title">
+          <section className="filter-section" aria-labelledby="bu-filter-title">
             <div className="filter-header">
-              <h3 id="sector-filter-title" className="filter-title">Sector</h3>
+              <h3 id="bu-filter-title" className="filter-title">Business Unit</h3>
               <button
                 type="button"
                 className="filter-clear"
-                onClick={clearSectors}
-                aria-label="Clear all sector filters"
+                onClick={clearBusinessUnits}
+                aria-label="Clear all business unit filters"
               >
                 Clear
               </button>
             </div>
             <ul className="filter-list">
-              {sectors.map((s) => {
-                const id = `sector-${s.replace(/\s+/g, '-').toLowerCase()}`;
-                const checked = selectedSectors.includes(s);
+              {businessUnits.map((b) => {
+                const id = `bu-${b.replace(/\s+/g, '-').toLowerCase()}`;
+                const checked = selectedBusinessUnits.includes(b);
                 return (
-                  <li key={s} className="filter-item">
+                  <li key={b} className="filter-item">
                     <label htmlFor={id} className="filter-label">
                       <input
                         id={id}
                         type="checkbox"
                         className="filter-checkbox"
                         checked={checked}
-                        onChange={() => onToggleSector(s)}
+                        onChange={() => onToggleBusinessUnit(b)}
                         aria-checked={checked}
-                        aria-label={s}
+                        aria-label={b}
                       />
-                      <span>{s}</span>
+                      <span>{b}</span>
                     </label>
                   </li>
                 );
@@ -228,35 +228,35 @@ function Sidebar({
 
           <div className="side-divider" role="separator" aria-hidden="true"></div>
 
-          <section className="filter-section" aria-labelledby="sector-filter-title-mobile">
+          <section className="filter-section" aria-labelledby="bu-filter-title-mobile">
             <div className="filter-header">
-              <h3 id="sector-filter-title-mobile" className="filter-title">Sector</h3>
+              <h3 id="bu-filter-title-mobile" className="filter-title">Business Unit</h3>
               <button
                 type="button"
                 className="filter-clear"
-                onClick={clearSectors}
-                aria-label="Clear all sector filters"
+                onClick={clearBusinessUnits}
+                aria-label="Clear all business unit filters"
               >
                 Clear
               </button>
             </div>
             <ul className="filter-list">
-              {sectors.map((s) => {
-                const id = `m-sector-${s.replace(/\s+/g, '-').toLowerCase()}`;
-                const checked = selectedSectors.includes(s);
+              {businessUnits.map((b) => {
+                const id = `m-bu-${b.replace(/\s+/g, '-').toLowerCase()}`;
+                const checked = selectedBusinessUnits.includes(b);
                 return (
-                  <li key={s} className="filter-item">
+                  <li key={b} className="filter-item">
                     <label htmlFor={id} className="filter-label">
                       <input
                         id={id}
                         type="checkbox"
                         className="filter-checkbox"
                         checked={checked}
-                        onChange={() => onToggleSector(s)}
+                        onChange={() => onToggleBusinessUnit(b)}
                         aria-checked={checked}
-                        aria-label={s}
+                        aria-label={b}
                       />
-                      <span>{s}</span>
+                      <span>{b}</span>
                     </label>
                   </li>
                 );
