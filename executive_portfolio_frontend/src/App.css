@@ -780,6 +780,11 @@
   margin-bottom: var(--space-6);
 }
 
+/* Optional: variant spacing when adjacent BU/portfolio groups are stacked */
+.summary-cards + .summary-cards {
+  margin-top: calc(var(--space-4) * -0.5);
+}
+
 @media (max-width: 1200px) {
   .summary-cards { grid-template-columns: repeat(3, 1fr); }
 }

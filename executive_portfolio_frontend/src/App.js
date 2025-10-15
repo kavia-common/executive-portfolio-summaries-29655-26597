@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import FilterBar from './components/FilterBar';
 import SummaryCards from './components/SummaryCards';
+import BUSummaryCards from './components/BUSummaryCards';
 import PerformanceChart from './components/PerformanceChart';
 import AllocationChart from './components/AllocationChart';
 import AccountsTable from './components/AccountsTable';
@@ -236,6 +237,10 @@ function App() {
 
           {/* KPI and Charts */}
           <>
+            {/* BU-level KPI summary (reflects Business Unit / Region filters) */}
+            <BUSummaryCards accounts={accounts} />
+
+            {/* Portfolio-level KPIs */}
             <SummaryCards items={kpis} />
             <PerformanceChart
               title={`${selectedPortfolio?.name || 'Portfolio'} — ${timeRange} Performance`}
