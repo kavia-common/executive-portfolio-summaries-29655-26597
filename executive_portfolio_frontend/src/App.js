@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import FilterBar from './components/FilterBar';
 import SummaryCards from './components/SummaryCards';
 import PerformanceChart from './components/PerformanceChart';
+import AllocationChart from './components/AllocationChart';
 import { portfolios as mockPortfolios, getPerformance, getHoldings, getAllocation } from './data/mockPortfolio';
 
 // PUBLIC_INTERFACE
@@ -210,6 +211,12 @@ function App() {
                   data={perf}
                   yLabel="%"
                 />
+                <div style={{ marginTop: 'var(--space-6)' }}>
+                  <AllocationChart
+                    title={`${selected?.name || 'Portfolio'} — Allocation`}
+                    data={allocation}
+                  />
+                </div>
               </>
             );
           })()}

@@ -454,6 +454,107 @@
   overflow: visible;
 }
 
+/* AllocationChart styles */
+.allocation-card {
+  position: relative;
+  overflow: visible;
+}
+
+.allocation-root {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .allocation-root {
+    grid-template-columns: 1fr;
+  }
+}
+
+.allocation-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-md);
+  background: var(--card-bg);
+}
+
+.allocation-seg {
+  transition: transform var(--transition-fast), filter var(--transition-fast), opacity var(--transition-fast);
+  cursor: default;
+}
+.allocation-seg-hitbox {
+  cursor: pointer;
+}
+.allocation-seg-hitbox:focus-visible + .allocation-seg {
+  outline: none;
+  filter: drop-shadow(0 0 0 3px var(--ring));
+}
+.allocation-seg-hitbox:hover + .allocation-seg {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
+}
+
+.allocation-center-value {
+  font-size: clamp(18px, 3.6vw, 22px);
+  font-weight: 800;
+  fill: var(--text-primary);
+}
+.allocation-center-label {
+  font-size: 12px;
+  fill: var(--text-secondary);
+}
+
+.allocation-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+@media (max-width: 520px) {
+  .allocation-legend {
+    grid-template-columns: 1fr;
+  }
+}
+.allocation-legend-item {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--color-primary) 6%, var(--card-bg));
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast), background var(--transition-fast);
+}
+.allocation-legend-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.allocation-legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 30%, var(--border-color));
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 10%, transparent);
+}
+
+.allocation-legend-text {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.allocation-legend-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.allocation-legend-pct {
+  font-size: 12px;
+}
+
 .chart-header {
   display: flex;
   align-items: center;
