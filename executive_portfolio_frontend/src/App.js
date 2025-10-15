@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import FilterBar from './components/FilterBar';
 import SummaryCards from './components/SummaryCards';
+import PerformanceChart from './components/PerformanceChart';
 import { portfolios as mockPortfolios, getPerformance, getHoldings, getAllocation } from './data/mockPortfolio';
 
 // PUBLIC_INTERFACE
@@ -201,7 +202,16 @@ function App() {
               },
             ];
 
-            return <SummaryCards items={kpis} />;
+            return (
+              <>
+                <SummaryCards items={kpis} />
+                <PerformanceChart
+                  title={`${selected?.name || 'Portfolio'} — ${timeRange} Performance`}
+                  data={perf}
+                  yLabel="%"
+                />
+              </>
+            );
           })()}
 
           <section className="card">

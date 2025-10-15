@@ -448,6 +448,105 @@
   to { transform: rotate(360deg); }
 }
 
+/* PerformanceChart styles */
+.performance-card {
+  position: relative;
+  overflow: visible;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.chart-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.chart-title h3 {
+  margin: 0;
+}
+
+.chart-root {
+  position: relative;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+}
+
+.chart-grid {
+  stroke: var(--border-color);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.chart-grid-vert {
+  opacity: 0.3;
+}
+
+.chart-axis {
+  stroke: color-mix(in oklab, var(--text-secondary) 40%, transparent);
+  stroke-width: 1.2;
+}
+
+.chart-tick {
+  font-size: 11px;
+  fill: var(--text-secondary);
+}
+
+.chart-line {
+  stroke: var(--color-primary);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 1px 0 color-mix(in oklab, var(--color-primary) 30%, transparent));
+}
+
+.chart-hover-line {
+  stroke: color-mix(in oklab, var(--color-primary) 40%, transparent);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+.chart-hover-dot {
+  fill: var(--color-primary);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.chart-tooltip .tooltip-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.chart-tooltip .tooltip-value {
+  font-size: 13px;
+}
+
+.chart-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+
 /* SummaryCards (KPI) */
 .summary-cards {
   display: grid;
