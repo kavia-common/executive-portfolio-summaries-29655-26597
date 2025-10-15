@@ -1,0 +1,106 @@
+:root {
+  /* Ocean Professional Color Palette */
+  --color-primary: #2563EB;  /* Blue 600 */
+  --color-secondary: #F59E0B; /* Amber 500 */
+  --color-success: #F59E0B;   /* Amber used as success accent per guide */
+  --color-error: #EF4444;     /* Red 500 */
+  --color-bg: #f9fafb;        /* Gray 50 */
+  --color-surface: #ffffff;   /* White */
+  --color-text: #111827;      /* Gray 900 */
+
+  /* Elevation and Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.10), 0 4px 6px rgba(0, 0, 0, 0.06);
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* Gradients (subtle depth) */
+  --gradient-subtle: linear-gradient(180deg, rgba(37, 99, 235, 0.10) 0%, rgba(249, 250, 251, 1) 100%);
+  --gradient-accent: radial-gradient(1000px 400px at 10% -10%, rgba(37, 99, 235, 0.12) 0%, rgba(37, 99, 235, 0) 60%);
+
+  /* Borders */
+  --border-color: rgba(17, 24, 39, 0.08);
+  --border-strong: rgba(17, 24, 39, 0.16);
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] {
+  --color-bg: #0B1220;         /* Deep navy */
+  --color-surface: #0F172A;    /* Slate 900/950 like */
+  --color-text: #E5E7EB;       /* Gray 200 */
+  --border-color: rgba(229, 231, 235, 0.12);
+  --border-strong: rgba(229, 231, 235, 0.24);
+
+  /* Adjust shadows for dark mode (more subtle/ambient) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-md: 0 6px 10px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 28px rgba(0, 0, 0, 0.50);
+
+  /* Gradients tuned for dark */
+  --gradient-subtle: linear-gradient(180deg, rgba(37, 99, 235, 0.18) 0%, rgba(15, 23, 42, 1) 100%);
+  --gradient-accent: radial-gradient(1000px 400px at 10% -10%, rgba(37, 99, 235, 0.25) 0%, rgba(37, 99, 235, 0) 60%);
+}
+
+/* Utility tokens mapping (for easy consumption) */
+:root, [data-theme="dark"] {
+  --card-bg: var(--color-surface);
+  --page-bg: var(--color-bg);
+  --text-primary: var(--color-text);
+  --text-secondary: color-mix(in oklab, var(--text-primary) 72%, transparent);
+  --ring: color-mix(in oklab, var(--color-primary) 35%, transparent);
+}
+
+/* Generic utility classes (opt-in) */
+.u-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.u-card-hover {
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+.u-card-hover:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.u-gradient-bg {
+  background: var(--gradient-subtle);
+}
+
+.u-focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.u-text-muted {
+  color: var(--text-secondary);
+}

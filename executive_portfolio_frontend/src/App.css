@@ -1,104 +1,107 @@
-/* CSS Variables for Theme Management */
-:root {
-  /* Light theme colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --text-primary: #282c34;
-  --text-secondary: #61dafb;
-  --border-color: #e9ecef;
-  --button-bg: #007bff;
-  --button-text: #ffffff;
-}
-
-[data-theme="dark"] {
-  /* Dark theme colors */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #282c34;
-  --text-primary: #ffffff;
-  --text-secondary: #61dafb;
-  --border-color: #404040;
-  --button-bg: #0056b3;
-  --button-text: #ffffff;
-}
+/* App-level layout helpers using Ocean Professional variables */
 
 .App {
-  text-align: center;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background: var(--page-bg);
+  color: var(--text-primary);
+  transition: background var(--transition-base), color var(--transition-base);
 }
 
+.App-header {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: var(--gradient-subtle);
+  padding: var(--space-8) var(--space-6);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Make the logo feel lighter and more modern */
 .App-logo {
-  height: 40vmin;
-  pointer-events: none;
+  height: clamp(120px, 20vmin, 180px);
+  filter: drop-shadow(0 6px 18px rgba(37, 99, 235, 0.25));
+  will-change: transform;
+  transition: transform var(--transition-slow);
 }
-
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
   }
 }
-
-.App-header {
-  background-color: var(--bg-secondary);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease;
-  position: relative;
+.App-logo:hover {
+  transform: scale(1.02);
 }
 
+/* Links */
 .App-link {
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
+  color: var(--color-primary);
+  transition: color var(--transition-fast);
+}
+.App-link:hover {
+  color: color-mix(in oklab, var(--color-primary) 90%, black);
 }
 
+/* Theme toggle aligned with tokens */
 .theme-toggle {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: var(--button-bg);
-  color: var(--button-text);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
+  top: var(--space-6);
+  right: var(--space-6);
+  background: var(--color-primary);
+  color: #fff;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 70%, white);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
-
 .theme-toggle:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  opacity: 0.9;
+  box-shadow: var(--shadow-md);
+  opacity: 0.95;
 }
-
 .theme-toggle:active {
   transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
+/* Simple container helpers for pages */
+.page {
+  width: min(1200px, 100% - var(--space-8));
+  margin: 0 auto;
+  padding: var(--space-8) 0;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+/* Animations */
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Responsive design for mobile */
+/* Responsive tweaks */
 @media (max-width: 768px) {
   .theme-toggle {
-    top: 10px;
-    right: 10px;
-    padding: 8px 16px;
+    top: var(--space-4);
+    right: var(--space-4);
+    padding: 8px 12px;
     font-size: 12px;
   }
 }
