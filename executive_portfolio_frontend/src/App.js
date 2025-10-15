@@ -4,6 +4,8 @@ import './App.css';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import FilterBar from './components/FilterBar';
+import SummaryCards from './components/SummaryCards';
+import { portfolios as mockPortfolios, getPerformance, getHoldings, getAllocation } from './data/mockPortfolio';
 
 // PUBLIC_INTERFACE
 function App() {
@@ -19,7 +21,8 @@ function App() {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
   // Example portfolios list - in future this can come from API
-  const portfolios = ['All Portfolios', 'Global Equity', 'Fixed Income', 'Real Assets', 'Alternatives'];
+  // Portfolios list mapped from mock data; include an "All" option for UX
+  const portfolios = ['All Portfolios', ...mockPortfolios.map(p => p.name)];
 
   // PUBLIC_INTERFACE
   const resetFilters = () => {
@@ -119,6 +122,87 @@ function App() {
             onReset={resetFilters}
             portfolios={portfolios}
           />
+
+          {/*
+            Prepare KPI data from mockPortfolio selectors.
+            - Choose the first mock portfolio as default if "All Portfolios" is selected.
+          */}
+          {(() => {
+            const selectedName = portfolio && portfolio !== 'All Portfolios' ? portfolio : mockPortfolios[0]?.name;
+            const selected = mockPortfolios.find(p => p.name === selectedName) || mockPortfolios[0];
+            const portfolioId = selected?.id;
+
+            // Performance time series for selected range
+            const perf = portfolioId ? getPerformance(portfolioId, timeRange) : [];
+            const latestReturn = perf.length ? perf[perf.length - 1].value : 0;
+            const prevReturn = perf.length > 1 ? perf[perf.length - 2].value : latestReturn;
+            const trendDir = latestReturn > prevReturn ? 'up' : latestReturn < prevReturn ? 'down' : 'flat';
+            const trendValue = perf.length > 1 ? `${(latestReturn - prevReturn).toFixed(2)}%` : undefined;
+
+            // AUM (mocked using holdings weights as a proxy to construct a number)
+            // In real app this would come from API; here we synthesize a stable figure per portfolio
+            const holdings = portfolioId ? getHoldings(portfolioId) : [];
+            const weightSum = holdings.reduce((acc, h) => acc + (h.weight || 0), 0);
+            const aumBn = (Math.max(1, Math.min(200, 20 + weightSum))) / 10; // 2.0 .. 20.0 range
+            const aumDisplay = `$${aumBn.toFixed(1)}B`;
+
+            // Risk proxy: simple normalized riskScore average scaled to 1-10
+            const avgRisk = holdings.length
+              ? holdings.reduce((acc, h) => acc + (h.riskScore || 5), 0) / holdings.length
+              : 5;
+            const riskStr = avgRisk.toFixed(1);
+
+            // Sharpe/Drawdown proxy: rough heuristic from volatility implied by range variation
+            const drawdown = perf.length
+              ? Math.min(0, Math.min(...perf.map(p => p.value)) - Math.max(...perf.map(p => p.value))) // negative or zero
+              : -0.0;
+            const ddDisplay = `${Math.abs(drawdown).toFixed(1)}%`;
+
+            const sharpeProxy = perf.length
+              ? (latestReturn - 2) / 10 // arbitrary baseline over "risk"
+              : 0.0;
+            const sharpeDisplay = sharpeProxy.toFixed(2);
+
+            const allocation = portfolioId ? getAllocation(portfolioId) : [];
+            const equities = allocation.find(a => a.category === 'Equities')?.percent ?? undefined;
+            const equitiesStr = equities != null ? `${equities}% Equity` : undefined;
+
+            const kpis = [
+              {
+                key: 'aum',
+                label: 'Total AUM',
+                value: aumDisplay,
+                subLabel: equitiesStr,
+                trend: { direction: trendDir, value: trendValue },
+                accent: 'primary',
+              },
+              {
+                key: 'ytd',
+                label: `${timeRange} Return`,
+                value: `${latestReturn.toFixed(2)}%`,
+                trend: { direction: trendDir, value: trendValue },
+                accent: 'secondary',
+              },
+              {
+                key: 'risk',
+                label: 'Risk (1-10)',
+                value: riskStr,
+                subLabel: 'Composite risk score',
+                trend: { direction: avgRisk <= 4 ? 'down' : avgRisk >= 7 ? 'up' : 'flat', value: undefined },
+                accent: 'primary',
+              },
+              {
+                key: 'sharpe',
+                label: 'Sharpe / Drawdown',
+                value: `${sharpeDisplay}`,
+                subLabel: `DD ${ddDisplay}`,
+                trend: { direction: sharpeProxy >= 0 ? 'up' : 'down', value: undefined },
+                accent: 'secondary',
+              },
+            ];
+
+            return <SummaryCards items={kpis} />;
+          })()}
 
           <section className="card">
             <div style={{ display: 'grid', placeItems: 'center', textAlign: 'center', padding: '40px 0' }}>
