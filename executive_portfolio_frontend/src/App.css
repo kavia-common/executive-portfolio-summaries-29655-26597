@@ -761,6 +761,117 @@ main .summary-cards + .card {
   margin-top: var(--space-6);
 }
 
+/* HoldingsTable styles */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.tbl-head th {
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  background: var(--card-bg);
+  z-index: 1;
+}
+
+.tbl-head .tbl-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+.tbl-head .tbl-sort:hover {
+  background: color-mix(in oklab, var(--color-primary) 10%, var(--card-bg));
+  color: var(--text-primary);
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+.tbl-head .tbl-sort:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+.tbl-head .tbl-sort.active {
+  color: var(--text-primary);
+}
+.tbl-sort-indicator {
+  display: inline-flex;
+  color: var(--text-secondary);
+}
+
+.tbl-body td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.tbl-row {
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.tbl-row:hover {
+  background: color-mix(in oklab, var(--color-primary) 8%, var(--card-bg));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+.tbl-row:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.tbl-name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.tbl-ticker {
+  font-size: 12px;
+}
+
+.tbl-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tbl-num.pos {
+  color: #065f46;
+}
+.tbl-num.neg {
+  color: #7f1d1d;
+}
+
+.tbl-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.tbl-pagination .button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.tbl-page-indicator {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
 /* FilterBar styles (Ocean Professional) */
 .filterbar {
   display: grid;

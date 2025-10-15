@@ -7,6 +7,7 @@ import FilterBar from './components/FilterBar';
 import SummaryCards from './components/SummaryCards';
 import PerformanceChart from './components/PerformanceChart';
 import AllocationChart from './components/AllocationChart';
+import HoldingsTable from './components/HoldingsTable';
 import { portfolios as mockPortfolios, getPerformance, getHoldings, getAllocation } from './data/mockPortfolio';
 
 // PUBLIC_INTERFACE
@@ -215,6 +216,20 @@ function App() {
                   <AllocationChart
                     title={`${selected?.name || 'Portfolio'} — Allocation`}
                     data={allocation}
+                  />
+                </div>
+
+                {/* Holdings Table */}
+                <div style={{ marginTop: 'var(--space-6)' }}>
+                  <HoldingsTable
+                    holdings={holdings}
+                    onSelect={(h) => {
+                      // For now, simply log; could navigate/show drawer with details
+                      // eslint-disable-next-line no-console
+                      console.log('Selected holding:', h);
+                      // Optionally focus UI or open a detail panel in future
+                    }}
+                    rowsPerPage={10}
                   />
                 </div>
               </>
