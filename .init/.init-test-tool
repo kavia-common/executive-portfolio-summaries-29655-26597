@@ -1,0 +1,4 @@
+{
+    "command": "npm run test",
+    "working_directory": "/home/kavia/workspace/code-generation/executive-portfolio-summaries-29655-26597/executive_portfolio_frontend"
+}
