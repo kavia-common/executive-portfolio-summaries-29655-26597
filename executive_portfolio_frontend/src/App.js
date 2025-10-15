@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Navbar from './components/Navbar';
@@ -11,23 +11,43 @@ import HoldingsTable from './components/HoldingsTable';
 import DrilldownPanel from './components/DrilldownPanel';
 import { portfolios as mockPortfolios, getPerformance, getHoldings, getAllocation } from './data/mockPortfolio';
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * App
+ * Top-level container managing:
+ * - global filters (timeRange, selected portfolio, sector/region filters, date range)
+ * - sidebar/drawer open state
+ * - drilldown selected holding state with slide-over panel
+ * - persistence: selected portfolio and theme (theme persisted via Navbar)
+ */
 function App() {
   // Quick filter state (maintained at App level for future data usage)
   const [selectedSectors, setSelectedSectors] = useState([]);
   const [selectedRegions, setSelectedRegions] = useState([]);
 
+  // Sidebar open (mobile drawer)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   // Drilldown state
   const [selectedHolding, setSelectedHolding] = useState(null);
   const [isDrillOpen, setIsDrillOpen] = useState(false);
 
   // FilterBar state
   const [timeRange, setTimeRange] = useState('YTD');
-  const [portfolio, setPortfolio] = useState('');
+
+  // Persist portfolio selection in localStorage
+  const [portfolio, setPortfolio] = useState(() => {
+    if (typeof window === 'undefined') return 'All Portfolios';
+    return localStorage.getItem('selectedPortfolio') || 'All Portfolios';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedPortfolio', portfolio || 'All Portfolios');
+    }
+  }, [portfolio]);
+
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
-  // Example portfolios list - in future this can come from API
   // Portfolios list mapped from mock data; include an "All" option for UX
   const portfolios = ['All Portfolios', ...mockPortfolios.map(p => p.name)];
 
@@ -36,6 +56,8 @@ function App() {
     setTimeRange('YTD');
     setPortfolio('All Portfolios');
     setDateRange({ from: '', to: '' });
+    setSelectedSectors([]);
+    setSelectedRegions([]);
   };
 
   // Toggle helpers
@@ -58,6 +80,88 @@ function App() {
     const r = selectedRegions.length ? `${selectedRegions.length} region(s)` : 'All regions';
     return `${s} • ${r}`;
   }, [selectedSectors, selectedRegions]);
+
+  // Derive selected portfolio object by name, default to first
+  const selectedPortfolioName =
+    portfolio && portfolio !== 'All Portfolios' ? portfolio : mockPortfolios[0]?.name;
+  const selectedPortfolio = mockPortfolios.find(p => p.name === selectedPortfolioName) || mockPortfolios[0];
+  const selectedPortfolioId = selectedPortfolio?.id;
+
+  // Derived data for charts and table
+  const performance = selectedPortfolioId ? getPerformance(selectedPortfolioId, timeRange) : [];
+  const allocation = selectedPortfolioId ? getAllocation(selectedPortfolioId) : [];
+  // Holdings with optional sector/region filtering (if user selected filters)
+  const holdingsRaw = selectedPortfolioId ? getHoldings(selectedPortfolioId) : [];
+  const holdings = useMemo(() => {
+    let rows = holdingsRaw;
+    if (selectedSectors.length) {
+      rows = rows.filter(h => h.sector && selectedSectors.includes(h.sector));
+    }
+    if (selectedRegions.length) {
+      rows = rows.filter(h => h.region && selectedRegions.includes(h.region));
+    }
+    return rows;
+  }, [holdingsRaw, selectedSectors, selectedRegions]);
+
+  // KPI derivations
+  const latestReturn = performance.length ? performance[performance.length - 1].value : 0;
+  const prevReturn = performance.length > 1 ? performance[performance.length - 2].value : latestReturn;
+  const trendDir = latestReturn > prevReturn ? 'up' : latestReturn < prevReturn ? 'down' : 'flat';
+  const trendValue = performance.length > 1 ? `${(latestReturn - prevReturn).toFixed(2)}%` : undefined;
+
+  const weightSum = holdingsRaw.reduce((acc, h) => acc + (h.weight || 0), 0);
+  const aumBn = (Math.max(1, Math.min(200, 20 + weightSum))) / 10; // 2.0 .. 20.0 range
+  const aumDisplay = `$${aumBn.toFixed(1)}B`;
+
+  const avgRisk = holdingsRaw.length
+    ? holdingsRaw.reduce((acc, h) => acc + (h.riskScore || 5), 0) / holdingsRaw.length
+    : 5;
+  const riskStr = avgRisk.toFixed(1);
+
+  const drawdown = performance.length
+    ? Math.min(0, Math.min(...performance.map(p => p.value)) - Math.max(...performance.map(p => p.value)))
+    : -0.0;
+  const ddDisplay = `${Math.abs(drawdown).toFixed(1)}%`;
+
+  const sharpeProxy = performance.length ? (latestReturn - 2) / 10 : 0.0;
+  const sharpeDisplay = sharpeProxy.toFixed(2);
+
+  const equities = allocation.find(a => a.category === 'Equities')?.percent ?? undefined;
+  const equitiesStr = equities != null ? `${equities}% Equity` : undefined;
+
+  const kpis = [
+    {
+      key: 'aum',
+      label: 'Total AUM',
+      value: aumDisplay,
+      subLabel: equitiesStr,
+      trend: { direction: trendDir, value: trendValue },
+      accent: 'primary',
+    },
+    {
+      key: 'ytd',
+      label: `${timeRange} Return`,
+      value: `${latestReturn.toFixed(2)}%`,
+      trend: { direction: trendDir, value: trendValue },
+      accent: 'secondary',
+    },
+    {
+      key: 'risk',
+      label: 'Risk (1-10)',
+      value: riskStr,
+      subLabel: 'Composite risk score',
+      trend: { direction: avgRisk <= 4 ? 'down' : avgRisk >= 7 ? 'up' : 'flat', value: undefined },
+      accent: 'primary',
+    },
+    {
+      key: 'sharpe',
+      label: 'Sharpe / Drawdown',
+      value: `${sharpeDisplay}`,
+      subLabel: `DD ${ddDisplay}`,
+      trend: { direction: sharpeProxy >= 0 ? 'up' : 'down', value: undefined },
+      accent: 'secondary',
+    },
+  ];
 
   return (
     <div className="App">
@@ -130,114 +234,35 @@ function App() {
             portfolios={portfolios}
           />
 
-          {/*
-            Prepare KPI data from mockPortfolio selectors.
-            - Choose the first mock portfolio as default if "All Portfolios" is selected.
-          */}
-          {(() => {
-            const selectedName = portfolio && portfolio !== 'All Portfolios' ? portfolio : mockPortfolios[0]?.name;
-            const selected = mockPortfolios.find(p => p.name === selectedName) || mockPortfolios[0];
-            const portfolioId = selected?.id;
+          {/* KPI and Charts */}
+          <>
+            <SummaryCards items={kpis} />
+            <PerformanceChart
+              title={`${selectedPortfolio?.name || 'Portfolio'} — ${timeRange} Performance`}
+              data={performance}
+              yLabel="%"
+            />
+            <div style={{ marginTop: 'var(--space-6)' }}>
+              <AllocationChart
+                title={`${selectedPortfolio?.name || 'Portfolio'} — Allocation`}
+                data={allocation}
+              />
+            </div>
 
-            // Performance time series for selected range
-            const perf = portfolioId ? getPerformance(portfolioId, timeRange) : [];
-            const latestReturn = perf.length ? perf[perf.length - 1].value : 0;
-            const prevReturn = perf.length > 1 ? perf[perf.length - 2].value : latestReturn;
-            const trendDir = latestReturn > prevReturn ? 'up' : latestReturn < prevReturn ? 'down' : 'flat';
-            const trendValue = perf.length > 1 ? `${(latestReturn - prevReturn).toFixed(2)}%` : undefined;
+            {/* Holdings Table */}
+            <div style={{ marginTop: 'var(--space-6)' }}>
+              <HoldingsTable
+                holdings={holdings}
+                onSelect={(h) => {
+                  setSelectedHolding(h);
+                  setIsDrillOpen(true);
+                }}
+                rowsPerPage={10}
+              />
+            </div>
+          </>
 
-            // AUM (mocked using holdings weights as a proxy to construct a number)
-            // In real app this would come from API; here we synthesize a stable figure per portfolio
-            const holdings = portfolioId ? getHoldings(portfolioId) : [];
-            const weightSum = holdings.reduce((acc, h) => acc + (h.weight || 0), 0);
-            const aumBn = (Math.max(1, Math.min(200, 20 + weightSum))) / 10; // 2.0 .. 20.0 range
-            const aumDisplay = `$${aumBn.toFixed(1)}B`;
-
-            // Risk proxy: simple normalized riskScore average scaled to 1-10
-            const avgRisk = holdings.length
-              ? holdings.reduce((acc, h) => acc + (h.riskScore || 5), 0) / holdings.length
-              : 5;
-            const riskStr = avgRisk.toFixed(1);
-
-            // Sharpe/Drawdown proxy: rough heuristic from volatility implied by range variation
-            const drawdown = perf.length
-              ? Math.min(0, Math.min(...perf.map(p => p.value)) - Math.max(...perf.map(p => p.value))) // negative or zero
-              : -0.0;
-            const ddDisplay = `${Math.abs(drawdown).toFixed(1)}%`;
-
-            const sharpeProxy = perf.length
-              ? (latestReturn - 2) / 10 // arbitrary baseline over "risk"
-              : 0.0;
-            const sharpeDisplay = sharpeProxy.toFixed(2);
-
-            const allocation = portfolioId ? getAllocation(portfolioId) : [];
-            const equities = allocation.find(a => a.category === 'Equities')?.percent ?? undefined;
-            const equitiesStr = equities != null ? `${equities}% Equity` : undefined;
-
-            const kpis = [
-              {
-                key: 'aum',
-                label: 'Total AUM',
-                value: aumDisplay,
-                subLabel: equitiesStr,
-                trend: { direction: trendDir, value: trendValue },
-                accent: 'primary',
-              },
-              {
-                key: 'ytd',
-                label: `${timeRange} Return`,
-                value: `${latestReturn.toFixed(2)}%`,
-                trend: { direction: trendDir, value: trendValue },
-                accent: 'secondary',
-              },
-              {
-                key: 'risk',
-                label: 'Risk (1-10)',
-                value: riskStr,
-                subLabel: 'Composite risk score',
-                trend: { direction: avgRisk <= 4 ? 'down' : avgRisk >= 7 ? 'up' : 'flat', value: undefined },
-                accent: 'primary',
-              },
-              {
-                key: 'sharpe',
-                label: 'Sharpe / Drawdown',
-                value: `${sharpeDisplay}`,
-                subLabel: `DD ${ddDisplay}`,
-                trend: { direction: sharpeProxy >= 0 ? 'up' : 'down', value: undefined },
-                accent: 'secondary',
-              },
-            ];
-
-            return (
-              <>
-                <SummaryCards items={kpis} />
-                <PerformanceChart
-                  title={`${selected?.name || 'Portfolio'} — ${timeRange} Performance`}
-                  data={perf}
-                  yLabel="%"
-                />
-                <div style={{ marginTop: 'var(--space-6)' }}>
-                  <AllocationChart
-                    title={`${selected?.name || 'Portfolio'} — Allocation`}
-                    data={allocation}
-                  />
-                </div>
-
-                {/* Holdings Table */}
-                <div style={{ marginTop: 'var(--space-6)' }}>
-                  <HoldingsTable
-                    holdings={holdings}
-                    onSelect={(h) => {
-                      setSelectedHolding(h);
-                      setIsDrillOpen(true);
-                    }}
-                    rowsPerPage={10}
-                  />
-                </div>
-              </>
-            );
-          })()}
-
+          {/* Demo Section */}
           <section className="card">
             <div style={{ display: 'grid', placeItems: 'center', textAlign: 'center', padding: '40px 0' }}>
               <img src={logo} className="App-logo" alt="logo" />

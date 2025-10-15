@@ -689,6 +689,13 @@
   margin: 0;
 }
 
+/* Small spacing utilities for inline controls */
+.badge + .badge,
+.button + .badge,
+.badge + .button {
+  margin-left: var(--space-2);
+}
+
 .chart-root {
   position: relative;
 }
